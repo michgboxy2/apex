@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -13,6 +14,8 @@ import (
 	"sync"
 	"syscall"
 	"time"
+
+	"github.com/joho/godotenv"
 )
 
 type EmailJob struct {
@@ -166,6 +169,13 @@ func sendEmailHandler(w http.ResponseWriter, r *http.Request) {
 
 }
 
+func init() {
+	err := godotenv.Load(".env")
+	if err != nil {
+		log.Fatal("Error loading .env file")
+	}
+}
+
 func main() {
 	workersNumStr := os.Getenv("WORKERS_COUNT")
 	queueSizeStr := os.Getenv("QUEUE_SIZE")
@@ -205,7 +215,10 @@ func main() {
 		<-quit
 		log.Println("shutdown initiated.")
 
-		if err := server.Shutdown(nil); err != nil {
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+
+		if err := server.Shutdown(ctx); err != nil {
 			log.Fatalf("server shutdown error: %v", err)
 		}
 
