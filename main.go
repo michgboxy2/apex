@@ -85,27 +85,27 @@ func main() {
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 
 	go func() {
-		<-quit
-		log.Println("shutdown initiated.")
-
-		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-		defer cancel()
-
-		if err := server.Shutdown(ctx); err != nil {
-			log.Fatalf("server shutdown error: %v", err)
+		log.Printf("Server listening on port :%s", port)
+		if err := server.ListenAndServe(); err != http.ErrServerClosed {
+			log.Fatalf("HTTP server ListenAndServe error: %v", err)
 		}
-
-		channelQueue.JobQueue.Close()
-		rabbitQueue.JobQueue.Close()
-
-		log.Println("Waiting for all workers to finish.")
-		wg.Wait()
-		log.Println("All workers have finished. Exiting.")
 	}()
 
-	log.Printf("Server listening on port :%s", port)
-	if err := server.ListenAndServe(); err != http.ErrServerClosed {
-		log.Fatalf("HTTP server ListenAndServe error: %v", err)
+	<-quit
+	log.Println("shutdown initiated.")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	if err := server.Shutdown(ctx); err != nil {
+		log.Printf("server shutdown error: %v", err)
 	}
+
+	channelQueue.JobQueue.Close()
+	rabbitQueue.JobQueue.Close()
+
+	log.Println("Waiting for all workers to finish.")
+	wg.Wait()
+	log.Println("All workers have finished. Exiting.")
 
 }
