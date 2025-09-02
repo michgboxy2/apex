@@ -66,7 +66,7 @@ func NewQueue(name, user, pass, host string) (*Queue, error) {
 
 }
 
-func ValidateEmailRequest(req EmailJob) error {
+func validateEmailRequest(req EmailJob) error {
 	if req.To == "" {
 		return errors.New("'to' field is required")
 	}
