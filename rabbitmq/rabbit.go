@@ -3,9 +3,11 @@ package rabbitqueue
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log"
 	"net/http"
+	"regexp"
 	"sync"
 	"time"
 
@@ -28,7 +30,8 @@ type Queue struct {
 }
 
 var (
-	JobQueue *Queue
+	JobQueue   *Queue
+	emailRegex = regexp.MustCompile("^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$")
 )
 
 func NewQueue(name, user, pass, host string) (*Queue, error) {
@@ -61,6 +64,22 @@ func NewQueue(name, user, pass, host string) (*Queue, error) {
 		name: q.Name,
 	}, nil
 
+}
+
+func ValidateEmailRequest(req EmailJob) error {
+	if req.To == "" {
+		return errors.New("'to' field is required")
+	}
+	if req.Subject == "" {
+		return errors.New("'subject' field is required")
+	}
+	if req.Body == "" {
+		return errors.New("'body' field is required")
+	}
+	if !emailRegex.MatchString(req.To) {
+		return errors.New("'to' field must be a valid email address")
+	}
+	return nil
 }
 
 func (q *Queue) Enqueue(job EmailJob) error {
@@ -184,10 +203,10 @@ func SendEmailHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// if err := channelq.ValidateEmailRequest(job); err != nil {
-	// 	http.Error(w, err.Error(), http.StatusUnprocessableEntity)
-	// 	return
-	// }
+	if err := validateEmailRequest(job); err != nil {
+		http.Error(w, err.Error(), http.StatusUnprocessableEntity)
+		return
+	}
 
 	if err := JobQueue.Enqueue(job); err != nil {
 		http.Error(w, err.Error(), http.StatusServiceUnavailable)
