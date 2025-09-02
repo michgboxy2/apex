@@ -49,10 +49,6 @@ func main() {
 		log.Fatal("Failed to initialize job queue")
 	}
 
-	a := fmt.Sprintf("amqp://%s:%s@%s:5672/", AMQPUser, AMQPPass, AMQPHost)
-
-	fmt.Println(a)
-
 	rabbitJobQueue, err := rabbitQueue.NewQueue(AMQPQueueName, AMQPUser, AMQPPass, AMQPHost)
 
 	if err != nil {

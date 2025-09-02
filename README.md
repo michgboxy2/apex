@@ -19,6 +19,8 @@ It accepts email jobs, enqueues them into RabbitMQ or Go Channel, and processes 
 
    cd apex
 
+   create a .env file and copy the content of the .env.example file
+
 2. Start RabbitMQ and Email service
 
 RUN docker compose up --build
