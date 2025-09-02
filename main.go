@@ -14,20 +14,11 @@ import (
 
 	channelQueue "apex/channelq"
 	rabbitQueue "apex/rabbitmq"
-
-	"github.com/joho/godotenv"
 )
 
 var (
 	wg sync.WaitGroup
 )
-
-func init() {
-	err := godotenv.Load(".env")
-	if err != nil {
-		log.Fatal("Error loading .env file")
-	}
-}
 
 func main() {
 	workersNumStr := os.Getenv("WORKERS_COUNT")
@@ -57,6 +48,10 @@ func main() {
 	if jobQueue == nil {
 		log.Fatal("Failed to initialize job queue")
 	}
+
+	a := fmt.Sprintf("amqp://%s:%s@%s:5672/", AMQPUser, AMQPPass, AMQPHost)
+
+	fmt.Println(a)
 
 	rabbitJobQueue, err := rabbitQueue.NewQueue(AMQPQueueName, AMQPUser, AMQPPass, AMQPHost)
 
